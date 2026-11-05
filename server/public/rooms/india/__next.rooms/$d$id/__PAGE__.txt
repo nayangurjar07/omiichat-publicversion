@@ -1,0 +1,47 @@
+1:"$Sreact.fragment"
+2:"/_next/static/chunks/0umf92h1sb77c.js"
+3:I[39756,["$2"],"default"]
+4:I[37457,["$2"],"default"]
+d:I[47257,["$2"],"ClientPageRoot"]
+e:"/_next/static/chunks/0-vf4dwcxda4z.js"
+f:"/_next/static/chunks/04__x-itve0e9.js"
+10:I[85738,["$2","$e","$f"],"default"]
+13:I[97367,["$2"],"OutletBoundary"]
+14:"$Sreact.suspense"
+17:"ViewportBoundary"
+18:I[97367,["$2"],"$17"]
+19:"MetadataBoundary"
+1a:I[97367,["$2"],"$19"]
+:HL["/_next/static/chunks/0b5el--4d9emv.css","style"]
+6:X
+9:X
+9:C
+c:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","$Ld",null,{"Component":"$10","serverProvidedParams":{"searchParams":{},"params":{"id":"india"},"promises":["$@11","$@12"]}}],[["$","script","script-0",{"src":"/_next/static/chunks/0-vf4dwcxda4z.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/04__x-itve0e9.js","async":true}]],["$","$L13",null,{"children":["$","$14",null,{"name":"Next.MetadataOutlet","children":"$@15"}]}]]}],"p":"$@16","v":null,"s":"$6"}}]]
+a:[["children",{"s":{"n":"id","t":"d","k":"india","s":[]},"h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}]}]]}],"p":"$@b","v":null,"s":"$6"},"c":"$Qc"}]]
+7:[["children",{"s":"rooms","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}]}]]}],"p":"$@8","v":"$9","s":"$6"},"c":"$Qa"}]]
+0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/0b5el--4d9emv.css","precedence":"next"}],["$","script","script-0",{"src":"/_next/static/chunks/0umf92h1sb77c.js","async":true}]],["$","html",null,{"lang":"en","suppressHydrationWarning":true,"className":"h-full _L-ESa_variable CmkcfW_variable","children":[["$","head",null,{"children":[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"WebApplication\",\"name\":\"Omii: Stranger Chat\",\"url\":\"https://omiichat.antideploy.app\",\"applicationCategory\":\"CommunicationApplication\",\"operatingSystem\":\"All\",\"browserRequirements\":\"Requires JavaScript. Requires HTML5.\",\"description\":\"Free anonymous 1-to-1 stranger chat. No sign-up needed. Talk to random people worldwide with interest matching. Safe, fast, and private.\",\"offers\":{\"@type\":\"Offer\",\"price\":\"0\",\"priceCurrency\":\"USD\"}}"}}],["$","script",null,{"dangerouslySetInnerHTML":{"__html":"(function(){try{var t=localStorage.getItem('omii_theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.setAttribute('data-theme','light');}else{document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();"}}]]}],["$","body",null,{"className":"min-h-full flex flex-col font-body antialiased bg-[var(--bg-paper)] text-[var(--text-ink)] selection:bg-[var(--accent-dial)] selection:text-white transition-colors duration-150","children":["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}],"notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]]}]}]]}]]}],"p":"$@5","v":null,"s":"$6"},"c":"$Q7"},"h":{"r":["$","$1","h",{"children":[null,["$","$L18",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1, maximum-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#2A5BD7"}]]}],["$","$L1a",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$14",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Room Chat – Omii: Stranger Chat – Omii"}],["$","meta","1",{"name":"description","content":"Free anonymous 1-to-1 stranger chat. No sign-up needed. Talk to random people worldwide with interest matching. Safe, fast, and private."}],["$","meta","2",{"name":"author","content":"Omii Studio"}],["$","meta","3",{"name":"keywords","content":"omii,omii chat,anonymous chat,stranger chat,talk to strangers,talk to stranger online free,random chat,chat with strangers,omegle alternative,switchboard chat,topic rooms,private chat rooms,random stranger chat,free chat with strangers"}],["$","meta","4",{"name":"creator","content":"Omii Studio"}],["$","meta","5",{"name":"robots","content":"index, follow"}],["$","link","6",{"rel":"canonical","href":"https://omiichat.antideploy.app"}],["$","meta","7",{"name":"google-site-verification","content":"xoehmGRDTQUKHGQ-TnC9ZU8Bf0GN60bZzz541Nw8VHs"}],"$L1b","$L1c","$L1d","$L1e","$L1f","$L20","$L21","$L22","$L23","$L24","$L25"]}]}],null]}],"$L26"]}],"p":"$@27","v":null,"s":"$6"}},"a":"$@28","u":"$@29","b":"nCWzXnhof_CE6aR8-yimi"}
+2a:I[27201,["$2"],"IconMark"]
+11:{}
+12:"$c:0:1:d:r:props:children:0:props:serverProvidedParams:params"
+15:null
+1b:["$","meta","8",{"property":"og:title","content":"Omii: Free Stranger Chat"}]
+1c:["$","meta","9",{"property":"og:description","content":"Free anonymous 1-to-1 stranger chat. No sign-up needed. Talk to random people worldwide with interest matching. Safe, fast, and private."}]
+1d:["$","meta","10",{"property":"og:url","content":"https://omiichat.antideploy.app"}]
+1e:["$","meta","11",{"property":"og:site_name","content":"Omii"}]
+1f:["$","meta","12",{"property":"og:locale","content":"en_US"}]
+20:["$","meta","13",{"property":"og:type","content":"website"}]
+21:["$","meta","14",{"name":"twitter:card","content":"summary"}]
+22:["$","meta","15",{"name":"twitter:title","content":"Omii: Free Stranger Chat"}]
+23:["$","meta","16",{"name":"twitter:description","content":"Free anonymous 1-to-1 stranger chat. No sign-up needed. Talk to random people worldwide with interest matching. Safe, fast, and private."}]
+24:["$","link","17",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}]
+25:["$","$L2a","18",{}]
+26:["$","meta",null,{"name":"next-size-adjust","content":""}]
+6:300
+29:true
+6:C
+28:0
+b:"$undefined"
+8:"$undefined"
+5:"$undefined"
+27:"$undefined"
+16:"$undefined"

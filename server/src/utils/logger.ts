@@ -1,0 +1,22 @@
+/**
+ * Simple structured logger with timestamps.
+ * Swap with winston/pino for production.
+ */
+const timestamp = () => new Date().toISOString();
+
+export const logger = {
+  info: (msg: string, ...args: unknown[]) =>
+    console.log(`[${timestamp()}] ℹ️  ${msg}`, ...args),
+
+  warn: (msg: string, ...args: unknown[]) =>
+    console.warn(`[${timestamp()}] ⚠️  ${msg}`, ...args),
+
+  error: (msg: string, ...args: unknown[]) =>
+    console.error(`[${timestamp()}] ❌ ${msg}`, ...args),
+
+  debug: (msg: string, ...args: unknown[]) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(`[${timestamp()}] 🐛 ${msg}`, ...args);
+    }
+  },
+};

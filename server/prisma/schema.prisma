@@ -1,0 +1,94 @@
+// ─── Prisma Schema for Omii ───────────────────────────────────────────
+// SQLite is used for instant local development with zero external setup.
+// To switch to PostgreSQL in production, change provider to "postgresql"
+// and update DATABASE_URL in .env.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A user report filed against another session or in a topic room
+model Report {
+  id          String   @id @default(uuid())
+  reporterSid String                            // Session ID or User ID of reporter
+  reportedSid String                            // Session ID or User ID of reported user
+  roomId      String?                           // Optional room ID (for room reports)
+  roomName    String?                           // Optional room title
+  messageText String?                           // The specific reported message text
+  mediaUrl    String?                           // Optional media link reported
+  reason      String                            // harassment | spam | sexual | underage | other
+  detail      String?                           // Optional free-text detail
+  context     String                            // JSON: last 20 messages for admin review
+  status      String   @default("pending")      // pending | banned | dismissed
+  createdAt   DateTime @default(now())
+
+  @@index([reportedSid, createdAt])
+  @@index([status])
+  @@index([roomId])
+}
+
+/// A banned session or user
+model Ban {
+  id        String    @id @default(uuid())
+  sessionId String    @unique                   // The banned session ID or user ID
+  reason    String                              // Reason for ban
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?                           // null = permanent ban
+
+  @@index([sessionId])
+}
+
+/// Optional registered user accounts
+model User {
+  id           String       @id @default(uuid())
+  email        String?      @unique
+  passwordHash String?
+  googleId     String?      @unique
+  nickname     String
+  avatar       String?      // Avatar icon name or URL
+  interests    String?      // JSON array of interest tags
+  bio          String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  sentFriendRequests     Friendship[] @relation("SentFriends")
+  receivedFriendRequests Friendship[] @relation("ReceivedFriends")
+}
+
+/// Friend connections between registered users
+model Friendship {
+  id        String   @id @default(uuid())
+  userId    String
+  friendId  String
+  status    String   @default("accepted") // pending | accepted
+  createdAt DateTime @default(now())
+
+  user   User @relation("SentFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("ReceivedFriends", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}
+
+/// 24-hour reconnect session codes
+model ReconnectCode {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  user1Sid    String
+  user1Nick   String
+  user2Sid    String?
+  user2Nick   String?
+  isUsed      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([code])
+  @@index([user1Sid])
+  @@index([user2Sid])
+}

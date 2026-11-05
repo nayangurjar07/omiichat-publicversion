@@ -1,0 +1,76 @@
+# Dependencies
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js build output
+.next/
+*/.next/
+out/
+*/out/
+build/
+*/build/
+
+# Server build output
+dist/
+*/dist/
+
+# SQLite databases & journals
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+server/prisma/*.db
+server/prisma/*.db-journal
+*.sql.dump
+
+# Uploads directory contents (preserve .gitkeep)
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Environment variables & Secrets
+.env
+.env.*
+!.env.example
+*.env
+server/.env
+web/.env.local
+*.local
+
+# Cloud & Service Account Credentials
+*firebase-adminsdk*.json
+serviceAccountKey*.json
+google-services*.json
+GoogleService-Info*.plist
+*.pem
+*.key
+*.crt
+*.jks
+*.keystore
+
+# TypeScript build info
+*.tsbuildinfo
+next-env.d.ts
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.agents/
