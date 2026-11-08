@@ -1,191 +1,132 @@
+// web/src/components/chat/MessageBubble.tsx
 'use client';
 
-import { useState } from 'react';
-import { ChatMessage, RoomMessage } from '@/types';
-import { getSessionId } from '@/lib/session';
-import { resolveMediaUrl } from '@/lib/endpoints';
-import { VoiceNotePlayer } from './VoiceNotePlayer';
-import { ImageViewerModal } from './ImageViewerModal';
-import { Copy, Eye, EyeOff, Maximize2, ShieldAlert } from 'lucide-react';
+import React, { useState } from 'react';
 
-interface MessageBubbleProps {
-  message: ChatMessage | RoomMessage;
-  partnerNickname?: string;
-  isConsecutive?: boolean;
-  onReportMessage?: (msg: ChatMessage | RoomMessage) => void;
+export interface MessageBubbleProps {
+  message: {
+    id?: string;
+    sender?: 'me' | 'stranger' | 'system' | string;
+    isOwn?: boolean;
+    isSelf?: boolean;
+    type?: 'text' | 'image' | 'voice' | 'audio' | 'system' | string;
+    content?: string;
+    text?: string;
+    imageUrl?: string;
+    fileUrl?: string;
+    url?: string;
+    audioUrl?: string;
+    timestamp?: string | number | Date;
+    senderName?: string;
+    [key: string]: any;
+  };
+  isOwn?: boolean;
+  onImageClick?: (url: string) => void;
+  [key: string]: any;
 }
 
-export function MessageBubble({
-  message,
-  partnerNickname,
-  isConsecutive = false,
-  onReportMessage,
-}: MessageBubbleProps) {
-  const [copied, setCopied] = useState(false);
-  const currentSid = typeof window !== 'undefined' ? getSessionId() : '';
-  const isSelf =
-    'isSelf' in message && typeof message.isSelf === 'boolean'
-      ? !!message.isSelf
-      : !!currentSid && message.senderId === currentSid;
+function extractImageSource(msg: MessageBubbleProps['message']): string | null {
+  if (msg.imageUrl) return msg.imageUrl;
+  if (msg.type === 'image' && (msg.fileUrl || msg.url || msg.content)) {
+    return (msg.fileUrl || msg.url || msg.content) as string;
+  }
+  const raw = (msg.content || msg.text || '').trim();
+  if (
+    raw.startsWith('data:image/') ||
+    raw.startsWith('/uploads/') ||
+    /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(raw)
+  ) {
+    return raw;
+  }
+  return null;
+}
 
-  const [isRevealed, setIsRevealed] = useState(isSelf);
-  const [isViewerOpen, setIsViewerOpen] = useState(false);
+export function MessageBubble({ message, isOwn: propIsOwn, onImageClick }: MessageBubbleProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const formatTime = (ts: number) => {
-    const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const copyText = () => {
-    if (message.text) {
-      navigator.clipboard.writeText(message.text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    }
-  };
-
-  const resolvedMediaUrl = message.mediaUrl ? resolveMediaUrl(message.mediaUrl) : undefined;
-
-  // System notice
-  if (message.isSystem) {
+  if (message.type === 'system' || message.sender === 'system') {
     return (
-      <div className="flex justify-center my-2 select-none font-mono">
-        <span className="px-3 py-1 text-xs text-zinc-400 bg-[#141414] rounded border border-[#27272a]">
-          {message.text}
+      <div className="my-2 flex justify-center px-4">
+        <span className="rounded-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] px-3.5 py-1 text-xs font-medium text-[var(--text-secondary)]">
+          {message.content || message.text}
         </span>
       </div>
     );
   }
 
-  const senderDisplayName = isSelf
-    ? 'You'
-    : message.senderNick || partnerNickname || 'Stranger';
+  const isSelf =
+    propIsOwn ??
+    message.isOwn ??
+    message.isSelf ??
+    (message.sender === 'me' || message.sender === 'self' || message.sender === 'user');
+
+  const imageSrc = extractImageSource(message);
+  const rawText = (message.content || message.text || '').trim();
+  const displayCaption = imageSrc && rawText === imageSrc ? '' : rawText;
 
   return (
-    <div
-      className={`group relative flex flex-col ${
-        isConsecutive ? 'mt-1' : 'mt-2.5'
-      } ${isSelf ? 'items-end' : 'items-start'}`}
-    >
-      {/* Sender name & time */}
-      {!isConsecutive && (
-        <div className="flex items-center gap-2 mb-1 px-1 font-mono text-[11px] text-zinc-500">
-          <span className="font-semibold text-zinc-300">{senderDisplayName}</span>
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px]">
-            {formatTime(message.timestamp)}
-          </span>
-        </div>
-      )}
-
-      {/* Bubble Container */}
-      <div className="relative max-w-[85%] sm:max-w-[75%]">
+    <>
+      <div className={`my-1.5 flex w-full px-3 sm:px-4 ${isSelf ? 'justify-end' : 'justify-start'}`}>
         <div
-          className={`text-sm leading-relaxed break-words overflow-hidden ${
-            message.mediaType === 'image'
-              ? 'p-1.5 bg-[#141414] border border-[#27272a] rounded-lg'
-              : message.mediaType === 'audio'
-              ? 'p-0.5'
-              : isSelf
-              ? 'px-3.5 py-2 bg-zinc-800 text-white rounded-lg rounded-br-xs border border-zinc-700'
-              : 'px-3.5 py-2 bg-[#18181b] text-zinc-100 rounded-lg rounded-bl-xs border border-[#27272a]'
+          className={`group relative max-w-[82%] sm:max-w-[70%] rounded-2xl px-3.5 py-2.5 shadow-sm transition ${
+            isSelf
+              ? 'bg-[var(--bubble-self)] text-[var(--bubble-self-text)] rounded-br-sm'
+              : 'bg-[var(--bubble-stranger)] text-[var(--bubble-stranger-text)] border border-[var(--border-subtle)] rounded-bl-sm'
           }`}
         >
-          {/* IMAGE MEDIA */}
-          {message.mediaType === 'image' && resolvedMediaUrl && (
-            <div className="relative rounded overflow-hidden bg-black/20">
-              <img
-                src={resolvedMediaUrl}
-                alt="Shared attachment"
-                onClick={() => {
-                  if (isRevealed) setIsViewerOpen(true);
-                }}
-                className={`max-w-xs sm:max-w-sm max-h-80 w-auto h-auto object-cover rounded transition-all duration-200 ${
-                  isRevealed ? 'filter-none cursor-pointer hover:opacity-95' : 'filter blur-xl scale-105'
-                }`}
-              />
-
-              {!isRevealed && (
-                <div
-                  onClick={() => setIsRevealed(true)}
-                  className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-4 text-center cursor-pointer select-none text-white font-mono"
-                >
-                  <Eye className="w-5 h-5 mb-1 opacity-90" />
-                  <span className="text-xs font-bold">Image hidden</span>
-                  <span className="text-[10px] text-zinc-400 mt-0.5">Click to view</span>
-                </div>
-              )}
-
-              {isRevealed && (
-                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-80 hover:opacity-100 transition-opacity font-mono">
-                  <button
-                    type="button"
-                    onClick={() => setIsViewerOpen(true)}
-                    title="View full screen"
-                    className="p-1.5 rounded bg-black/80 text-white text-[10px] flex items-center gap-1 cursor-pointer"
-                  >
-                    <Maximize2 className="w-3 h-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsRevealed(false)}
-                    title="Hide image"
-                    className="p-1.5 rounded bg-black/80 text-white text-[10px] flex items-center gap-1 cursor-pointer"
-                  >
-                    <EyeOff className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
+          {!isSelf && message.senderName && (
+            <div className="mb-1 text-[11px] font-semibold text-indigo-400">
+              {message.senderName}
             </div>
           )}
 
-          {/* AUDIO MEDIA */}
-          {message.mediaType === 'audio' && resolvedMediaUrl && (
-            <VoiceNotePlayer audioUrl={resolvedMediaUrl} isSelf={isSelf} />
+          {/* Photo Attachment */}
+          {imageSrc && (
+            <div className="mb-1.5 overflow-hidden rounded-xl border border-black/10 bg-black/20">
+              <img
+                src={imageSrc}
+                alt="Shared photo"
+                loading="lazy"
+                onClick={() => {
+                  if (onImageClick) onImageClick(imageSrc);
+                  else setLightboxOpen(true);
+                }}
+                className="max-h-72 w-auto max-w-full cursor-zoom-in object-contain transition hover:opacity-95"
+              />
+            </div>
           )}
 
-          {/* TEXT CONTENT */}
-          {message.text && (
-            <p className="whitespace-pre-wrap select-text font-sans">{message.text}</p>
-          )}
-        </div>
-
-        {/* Hover Action Strip */}
-        <div
-          className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${
-            isSelf ? '-left-13 pr-1' : '-right-13 pl-1'
-          }`}
-        >
-          {message.text && (
-            <button
-              type="button"
-              onClick={copyText}
-              title={copied ? 'Copied' : 'Copy message'}
-              className="p-1.5 rounded bg-[#18181b] hover:bg-[#27272a] text-zinc-400 hover:text-white border border-[#27272a] transition-colors cursor-pointer"
-            >
-              <Copy className="w-3 h-3" />
-            </button>
-          )}
-          {!isSelf && onReportMessage && (
-            <button
-              type="button"
-              onClick={() => onReportMessage(message)}
-              title="Report message"
-              className="p-1.5 rounded bg-[#18181b] hover:bg-rose-950/40 text-zinc-400 hover:text-rose-400 border border-[#27272a] transition-colors cursor-pointer"
-            >
-              <ShieldAlert className="w-3 h-3" />
-            </button>
+          {/* Text Content */}
+          {displayCaption && (
+            <p className="whitespace-pre-wrap break-words text-[14.5px] leading-relaxed">
+              {displayCaption}
+            </p>
           )}
         </div>
       </div>
 
-      {/* Full-screen Viewer */}
-      {resolvedMediaUrl && message.mediaType === 'image' && (
-        <ImageViewerModal
-          isOpen={isViewerOpen}
-          onClose={() => setIsViewerOpen(false)}
-          imageUrl={resolvedMediaUrl}
-        />
+      {/* Built-in Fullscreen Image Lightbox */}
+      {lightboxOpen && imageSrc && (
+        <div
+          onClick={() => setLightboxOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-4 right-4 rounded-full bg-white/10 p-2.5 text-white hover:bg-white/20"
+          >
+            ✕
+          </button>
+          <img
+            src={imageSrc}
+            alt="Fullscreen view"
+            className="max-h-[90dvh] max-w-[92vw] rounded-xl object-contain shadow-2xl"
+          />
+        </div>
       )}
-    </div>
+    </>
   );
 }
+
+export default MessageBubble;

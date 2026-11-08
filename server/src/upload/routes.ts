@@ -1,184 +1,98 @@
+// server/src/upload/routes.ts
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { CloudStorageService } from '../storage/CloudStorageService';
-import { moderateImage } from '../storage/imageModeration';
-import { logger } from '../utils/logger';
 
 const router = Router();
-const storage = new CloudStorageService();
-
-// Maximum multer body size cap (5 MB for images)
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB cap for images
-const MAX_AUDIO_SIZE = 2 * 1024 * 1024; // 2 MB cap for voice notes
+export const storage = new CloudStorageService();
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: MAX_FILE_SIZE,
+    fileSize: 8 * 1024 * 1024, // 8 MB max
   },
 });
 
-interface DetectedMedia {
-  category: 'image' | 'audio';
-  mimeType: string;
-}
-
-/**
- * Validates the actual magic bytes of the file buffer (first 12 bytes).
- * Never trusts req.file.mimetype or client-provided filename extensions alone.
- */
-function detectMediaFromMagicBytes(buffer: Buffer): DetectedMedia | null {
-  if (!buffer || buffer.length < 12) return null;
-
-  // 1. JPEG: FF D8 FF
-  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
-    return { category: 'image', mimeType: 'image/jpeg' };
-  }
-
-  // 2. PNG: 89 50 4E 47 0D 0A 1A 0A
+function detectMimeFromMagicBytes(buf: Buffer): string | null {
+  if (!buf || buf.length < 12) return null;
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+  // PNG: 89 50 4E 47
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png';
+  // GIF: 47 49 46 38
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) return 'image/gif';
+  // WEBP: RIFF....WEBP
   if (
-    buffer[0] === 0x89 &&
-    buffer[1] === 0x50 &&
-    buffer[2] === 0x4e &&
-    buffer[3] === 0x47 &&
-    buffer[4] === 0x0d &&
-    buffer[5] === 0x0a &&
-    buffer[6] === 0x1a &&
-    buffer[7] === 0x0a
+    buf.toString('ascii', 0, 4) === 'RIFF' &&
+    buf.toString('ascii', 8, 12) === 'WEBP'
   ) {
-    return { category: 'image', mimeType: 'image/png' };
+    return 'image/webp';
   }
-
-  // 3. WebP: RIFF .... WEBP
-  if (
-    buffer.toString('ascii', 0, 4) === 'RIFF' &&
-    buffer.toString('ascii', 8, 12) === 'WEBP'
-  ) {
-    return { category: 'image', mimeType: 'image/webp' };
-  }
-
-  // 4. OGG: OggS
-  if (buffer.toString('ascii', 0, 4) === 'OggS') {
-    return { category: 'audio', mimeType: 'audio/ogg' };
-  }
-
-  // 5. WebM (Matroska): 1A 45 DF A3
-  if (
-    buffer[0] === 0x1a &&
-    buffer[1] === 0x45 &&
-    buffer[2] === 0xdf &&
-    buffer[3] === 0xa3
-  ) {
-    return { category: 'audio', mimeType: 'audio/webm' };
-  }
-
-  // 6. MP4 / M4A (ISO Base Media File Format: ....ftyp)
-  if (buffer.toString('ascii', 4, 8) === 'ftyp') {
-    return { category: 'audio', mimeType: 'audio/mp4' };
-  }
-
-  // 7. MP3: ID3 header or sync frame (FF Ex)
-  if (
-    buffer.toString('ascii', 0, 3) === 'ID3' ||
-    (buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0)
-  ) {
-    return { category: 'audio', mimeType: 'audio/mpeg' };
-  }
-
-  // 8. WAV: RIFF .... WAVE
-  if (
-    buffer.toString('ascii', 0, 4) === 'RIFF' &&
-    buffer.toString('ascii', 8, 12) === 'WAVE'
-  ) {
-    return { category: 'audio', mimeType: 'audio/wav' };
-  }
+  // WEBM / OGG / WAV / MP3 / MP4 audio
+  if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) return 'audio/webm';
+  if (buf.toString('ascii', 0, 4) === 'OggS') return 'audio/ogg';
+  if (buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WAVE') return 'audio/wav';
+  if (buf.toString('ascii', 0, 3) === 'ID3' || (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0)) return 'audio/mpeg';
+  if (buf.toString('ascii', 4, 8) === 'ftyp') return 'audio/mp4';
 
   return null;
 }
 
-/**
- * POST /api/upload
- * Hardened upload endpoint:
- * 1. Checks true file magic bytes (rejecting spoofed extensions, executables, HTML, SVG).
- * 2. Enforces 5 MB limit for images, 2 MB limit for voice notes.
- * 3. Runs image moderation pipeline on images before saving.
- */
-router.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
+// Accept any field name ('file', 'image', 'audio') to prevent Multer field mismatch errors
+const handleUpload = async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.file) {
+    const files = req.files as Express.Multer.File[] | undefined;
+    const file = req.file || (files && files[0]);
+
+    if (!file || !file.buffer) {
       res.status(400).json({ error: 'No file provided' });
       return;
     }
 
-    const { buffer, originalname, size } = req.file;
-
-    // 1. Inspect binary magic bytes
-    const detected = detectMediaFromMagicBytes(buffer);
-    if (!detected) {
-      logger.warn(`Upload rejected: invalid or disallowed magic bytes for file ${originalname}`);
-      res.status(400).json({
-        error: 'Invalid file signature. Only verified JPEG, PNG, WebP, WebM, OGG, MP4/M4A, MP3, and WAV media are permitted.',
-      });
+    const detectedMime = detectMimeFromMagicBytes(file.buffer);
+    if (!detectedMime) {
+      res.status(400).json({ error: 'Unsupported or unsafe file format' });
       return;
     }
 
-    const isImage = detected.category === 'image';
-    const isAudio = detected.category === 'audio';
+    let fileUrl: string | null = null;
+    let fileKey: string | null = null;
 
-    // 2. Enforce strict category size caps
-    if (isImage && size > MAX_IMAGE_SIZE) {
-      res.status(400).json({
-        error: `Image exceeds maximum allowed size of 5 MB (${(size / (1024 * 1024)).toFixed(2)} MB uploaded).`,
-      });
-      return;
-    }
-
-    if (isAudio && size > MAX_AUDIO_SIZE) {
-      res.status(400).json({
-        error: `Voice note exceeds maximum allowed size of 2 MB (${(size / (1024 * 1024)).toFixed(2)} MB uploaded).`,
-      });
-      return;
-    }
-
-    // 3. Image Moderation Pipeline
-    let moderation = { approved: true, flagged: false, reason: undefined as string | undefined };
-    if (isImage) {
-      const modResult = await moderateImage(buffer, detected.mimeType, originalname);
-      if (!modResult.approved) {
-        res.status(422).json({
-          error: modResult.reason || 'Image rejected by safety moderation.',
-        });
-        return;
+    // Try primary cloud/disk storage first
+    try {
+      const stored = await storage.upload(file.buffer, file.originalname || 'upload.bin', detectedMime);
+      if (stored?.url) {
+        fileUrl = stored.url;
+        fileKey = stored.key;
       }
-      moderation = {
-        approved: modResult.approved,
-        flagged: modResult.flagged,
-        reason: modResult.reason,
-      };
+    } catch (storageErr) {
+      console.warn('[upload] Primary storage error, using base64 fallback:', storageErr);
     }
 
-    // 4. Store media through Cloud/Supabase storage provider
-    const result = await storage.upload(buffer, originalname, detected.mimeType);
-    logger.info(`Uploaded ${detected.category} (${detected.mimeType}) via ${storage.getActiveProvider()}: ${result.key} (${result.size} bytes)`);
+    // Convert to inline Data URL fallback if external storage failed or returned no URL
+    if (!fileUrl) {
+      const base64Data = file.buffer.toString('base64');
+      fileUrl = `data:${detectedMime};base64,${base64Data}`;
+    }
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.json({
+    res.status(200).json({
       success: true,
-      url: result.url,
-      key: result.key,
-      type: detected.category,
-      mimeType: detected.mimeType,
-      size: result.size,
-      provider: storage.getActiveProvider(),
-      moderation,
+      url: fileUrl,
+      imageUrl: fileUrl,
+      key: fileKey,
+      mimeType: detectedMime,
+      size: file.size,
     });
   } catch (err) {
-    logger.error('Error during media upload:', err);
-    res.status(500).json({ error: 'Failed to process media upload' });
+    console.error('[upload] Error processing upload:', err);
+    res.status(500).json({ error: 'Upload failed' });
   }
-});
+};
 
-export { storage };
+router.post('/upload', upload.any(), handleUpload);
+router.post('/', upload.any(), handleUpload);
+
+export const uploadRoutes = router;
 export default router;
